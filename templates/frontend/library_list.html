@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block content %}
+<body>
+
+  {% include 'nav.html' %}
+  <div class="container-fluid mt-2">
+    <div class="row">
+      {% for i in object_list %}
+        <div class="col-lg-4 col-md-6 col-sm-12 my-1">
+          <div class="card lib_card" style="width: 90%;height: 18em">
+            <div class="card-header bg-light d-flex">
+              <button class="btn btn-outline-danger ml-auto" data-toggle="modal" data-whatever="{{i.pk}}" data-target="#delete_library">&#10005</button>
+            </div>
+            <div class="card-body align-self-center d-flex" style="transform: rotate(0);">
+              <h5 class="my-auto">{{ i.name }}</h5>
+              <a class="stretched-link" href="{% url 'library_detail' i.pk %}"></a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      <div class="col-lg-4 col-md-4 col-sm-12 my-1">
+        <div class="card" style="width: 90%;height: 18em">
+          <div class="card-body" style="width: 100%;height: 100%;font-size: 10em;font-weight:lighter;opacity:0.5">
+            <button style="width:100%;height:100%;background-color:white" class="bg-light border rounded" data-toggle="modal" data-target="#add_modal">+</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal fade" id="delete_library" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header d-flex flex-column">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <div><h5>Are you sure you want to delete this library?</h5></div>
+          <div><h6 class="text-muted">This will delete all associated articles.</h6></div>
+        </div>
+        <div class="modal-body">
+          <form class="" id='delete_form' method="post">
+            {% csrf_token %}
+
+            <input type="hidden" class="form-control" name="lib_id">
+            <button type="submit" class="btn btn-outline-success">Yes</button>
+            <button type="button" class="btn btn-outline-danger" data-dismiss="modal">No</button>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+    $("#delete_form").submit(function(){
+      console.log("ok");
+      $.ajax({
+        type:"POST",
+        url:"{% url 'delete_library' %}",
+        data: {
+          id: $(this).find("input[name='lib_id']").val(),
+          csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        success: (res)=>{location.reload();}
+
+      })
+      return false;
+    })
+  </script>
+
+  <div class="modal fade" id="add_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="add_modal">Modal title</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form class="" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="#name">Enter a name:</label>
+              <input type="text" required id="name" class="form-control" name="name">
+            </div>
+            <input type="submit" value="Create" class="btn btn-info">
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style media="screen">
+    .lib_card{
+      background-color: #3CD1D5;
+      color: white;
+    }
+
+  </style>
+  <script type="text/javascript">
+    $('#delete_library').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget)
+        var recipient = button.data('whatever')
+        console.log("ok");
+
+        var modal = $(this)
+        modal.find('.modal-title').text('New message to ' + recipient)
+        modal.find('.modal-body input').val(recipient)
+      })
+  </script>
+
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block content %}
+<style media="screen">
+  .dropright{
+    width:320px;
+  }
+  .dropright .dropdown-toggle{
+    width:100%
+  }
+  .dropright:hover > .dropdown-menu {
+    display: block;
+  }
+
+  .dropright > .dropdown-toggle:active {
+      pointer-events: none;
+  }
+  .add_tag{
+    transform: rotate(0deg)
+  }
+  .remove_tag{
+     transform: rotate(30deg)
+  }
+  .user_tag{
+    width: 50%
+  }
+  .btn-group{
+    width: 70%
+  }
+  @media only screen and (max-width: 600px) {
+    .container{
+      margin-top: 10px
+    }
+    .user_tag{
+      width: 60%
+    }
+  }
+</style>
+<body>
+  {% csrf_token %}
+  {% include 'nav.html' %}
+  <div class="container-fluid mt-2">
+    <div class="row">
+      <div class="col-12 col-lg-6">
+        {% for i,j in disciplines.items %}
+          <div class="dropright mx-xl-4 mx-auto">
+              <button class="btn btn btn-secondary my-1 dropdown-toggle text-left" type="button" id="{{i}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {{ i }}
+              </button>
+              <div class="dropdown-menu m-0" aria-labelledby="{{i}}">
+                {% for sub in j %}
+                  <a class="dropdown-item d-flex">
+                    {{sub}}
+                    <button class="btn btn-white ml-auto add_tag" disc="{{i}}" subd="{{sub}}" onclick="addTag(this)"><i class="fas fa-thumbtack"></i></button>
+                    <!-- {% if sub in request.user.tags %}
+                      <button class="btn btn-white ml-auto remove_tag" disc="{{i}}" subd="{{sub}}" onclick="removeTag(this)"><i class="fas fa-thumbtack"></i></button>
+                    {% else %}
+                      <button class="btn btn-white ml-auto add_tag" disc="{{i}}" subd="{{sub}}" onclick="addTag(this)"><i class="fas fa-thumbtack"></i></button>
+                    {% endif %} -->
+                  </a>
+
+                {% endfor %}
+              </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="col-12 col-lg-6 user_tags">
+        <div class="d-flex mb-3" style="font-size:1.3em">Your Topics:</div>
+        {% for sub in request.user.tags %}
+          <a class="d-flex user_tag" role="button" class="btn btn-outline-info" subd="{{sub}}">{{sub}}<button class="btn btn-white ml-auto remove_tag" disc="{{i}}" subd="{{sub}}" onclick="removeYourTopic(this)"><i class="fas fa-thumbtack"></i></button></a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+    function addTag(ele) {
+      $.ajax({
+        type: 'POST',
+        url: "{% url 'add_remove_topic' %}",
+        data: {add: 1,tag: $(ele).attr("subd"),csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
+        success: (res)=>{
+          // $(ele).removeClass("add_tag")
+          // $(ele).addClass("remove_tag")
+          // $(ele).attr("onclick","removeTag(this)")
+          // console.log($(".user_tags").find(`a`));
+          if($(".user_tags").find(`a[subd='${$(ele).attr("subd")}']`).length == 0){
+            $(".user_tags").append(`
+            <a class="d-flex user_tag" role="button" class="btn btn-outline-info" subd=${$(ele).attr("subd")}>
+              ${$(ele).attr("subd")}
+              <button class="btn btn-white ml-auto remove_tag" disc='${$(ele).attr("disc")}' subd='${$(ele).attr("subd")}' onclick="removeYourTopic(this)">
+                <i class="fas fa-thumbtack"></i>
+              </button>
+            </a>`
+            )
+          }
+        },
+        error: function(error,text,xhr){
+          console.log(error,text,xhr)
+        }
+      })
+    }
+    function removeTag(ele) {
+      $.ajax({
+        type: 'POST',
+        url: "{% url 'add_remove_topic' %}",
+        data: {add: 0,tag: $(ele).attr("subd"),csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
+        success: (res)=>{
+          $(ele).removeClass("remove_tag")
+          $(ele).addClass("add_tag")
+          $(ele).attr("onclick","addTag(this)")
+
+          console.log($(".user_tags").find(`.user_tag[subd='${$(ele).attr("subd")}']`))
+        },
+        error: function(error,text,xhr){
+          console.log(error,text,xhr)
+        }
+      })
+    }
+    function removeYourTopic(ele) {
+      $.ajax({
+        type: 'POST',
+        url: "{% url 'add_remove_topic' %}",
+        data: {add: 0,tag: $(ele).attr("subd"),csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val()},
+        success: (res)=>{
+          $(ele).parent().remove()
+        },
+        error: function(error,text,xhr){
+          console.log(error,text,xhr)
+        }
+      })
+    }
+  </script>
+
+</body>
+{% endblock %}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+  <style media="screen">
+    .add_tag{
+      transform: rotate(0deg)
+    }
+    .remove_tag{
+       transform: rotate(30deg)
+    }
+  </style>
+  <script type="text/javascript" src="{% static 'js/remove_add.js'%}">
+
+  </script>
+
+  <body>
+    {% include 'nav.html' %}
+    <div class="container-lg mt-4">
+      <div class="nav nav-tabs" id="nav-tab" role="tablist">
+        <a class="nav-link nav-item active" id="home-tab" data-toggle="tab" href="#tags" role="tab" aria-controls="home" aria-selected="true">Home</a>
+        <a class="nav-link nav-item" id="profile-tab" data-toggle="tab" href="#keywords" role="tab" aria-controls="keywords" aria-selected="false">Kewords</a>
+        <a class="nav-link nav-item" id="profile-tab" data-toggle="tab" href="#authors" role="tab" aria-controls="authors" aria-selected="false">Authors</a>
+
+
+      </div>
+
+      <div class="tab-content mt-5" id="myTabContent">
+        <div class="tab-pane fade show active" role="tabpanel" id="tags">
+          <div class="row">
+            <div class="col-12 col-lg-6">
+              {% for i,j in disciplines.items %}
+                <div class="dropright mx-xl-4 mx-auto">
+                    <button class="btn btn btn-secondary my-1 dropdown-toggle text-left" type="button" id="{{i}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      {{ i }}
+                    </button>
+                    <div class="dropdown-menu m-0" aria-labelledby="{{i}}">
+                      {% for sub in j %}
+                        <a class="dropdown-item d-flex">
+                          {{sub}}
+                          <button class="btn btn-white ml-auto add_tag" disc="{{i}}" subd="{{sub}}" onclick="addTag(this)"><i class="fas fa-thumbtack"></i></button>
+                        </a>
+
+                      {% endfor %}
+                    </div>
+                </div>
+              {% endfor %}
+            </div>
+            <div class="col-12 col-lg-6 user_tags">
+              <div class="d-flex mb-3" style="font-size:1.3em">Your Topics:</div>
+              {% for sub in request.user.tags %}
+                <a class="d-flex user_tag" role="button" class="btn btn-outline-info" subd="{{sub}}">{{sub}}<button class="btn btn-white ml-auto remove_tag" disc="{{i}}" subd="{{sub}}" onclick="removeYourTopic(this)"><i class="fas fa-thumbtack"></i></button></a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane fade show" role="tabpanel" id="keywords">
+          <div class="container m-auto">
+            <div class="input-group mb-3">
+              <input type="text" class="form-control"  onkeypress="onPress(event,this,'kw')" id="input_kw" placeholder="Add keywords separated by ," aria-describedby="basic-addon2">
+              <div class="input-group-append">
+                <button class="btn btn-outline-info" type="button" onclick="keywords(this)">Add</button>
+              </div>
+            </div>
+            <div class="d-flex keywords">
+              {% for i in request.user.keywords %}
+                <span class='bg-secondary text-light ml-2 rounded'>
+                  <span class='ml-2'>{{i}}<button kw='{{i}}' class='ml-2 btn btn-secondary btn-sm' onclick='removeKw(this)'>x</button></span>
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane fade show" role="tabpanel" id="authors">
+          <div class="container m-auto">
+            <div class="alert alert-secondary" role="alert">
+              Type in author's and press enter or click 'Add'.
+            </div>
+            <div class="input-group mb-3">
+              <input type="text" class="form-control"  onkeypress="onPress(event,this,'au')" id="input_au" placeholder="Add author's full name" aria-describedby="basic-addon2">
+              <div class="input-group-append">
+                <button class="btn btn-outline-info" type="button" onclick="author(this)">Add</button>
+              </div>
+            </div>
+            <div class="d-flex authors">
+              {% for i in request.user.authors %}
+                <span class='bg-secondary text-light ml-2 rounded'>
+                  <span class='ml-2'>{{i}}<button au='{{i}}' class='ml-2 btn btn-secondary btn-sm' onclick='removeAuthor(this)'>x</button></span>
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="d-flex mt-5">
+        <button type="button" class="btn btn-outline-secondary ml-auto mr-1 btnPrevious" name="button">Previous</button>
+        <button type="button" class="btn btn-outline-info mr-auto btnNext" name="button">Next</button>
+      </div>
+    </div>
+
+
+    <script type="text/javascript">
+    var csrf_token = "{{csrf_token}}"
+    $(document).ready(function () {
+      $('.btnNext').click(function(){
+        console.log("ok");
+        $('.nav-tabs > .active').next('a').trigger('click');
+      });
+      $('.btnPrevious').click(function(){
+        $('.nav-tabs > .active').prev('a').trigger('click');
+      });
+    })
+
+    </script>
+
+  </body>
+{% endblock %}

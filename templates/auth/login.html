@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% block content %}
+<style media="screen">
+  .form-signin input{
+    margin: 2px
+  }
+</style>
+
+<body>
+  {% include 'nav.html' %}
+  <div class="container d-flex align-items-center">
+    <form class="form-signin mx-auto mt-5" method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        {{ field.label_tag }}<br>
+        {{ field }}<br>
+        {% if field.help_text %}
+          <small class="text-muted">{{ field.help_text }}</small><br>
+        {% endif %}
+        {% for error in field.errors %}
+          <small class="text-danger">{{ error }}</small><br>
+        {% endfor %}
+      {% endfor %}
+      {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+    </form>
+  </div>
+</body>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<body>
+  {% include 'nav.html' %}
+
+  <div class="container">
+    {% if object.articles.all|length == 0 %}
+      <div class="alert alert-info mt-2">No articles to show. Add them to '{{ object.name }}'</div>
+    {% endif %}
+    {% for i in object.articles.all %}
+      <div class="card my-2" style="width: 90%">
+        <div class="card-body">
+          <h5 class="card-title">Title: <span class="text-muted">{{ i.title }}</span></h5>
+          <h6 class="card-subtitle my-2">Source: <span class="text-muted">{{ i.source }}</span></h6>
+          <p class="card-text">Keywords: {{ i.keywords }}</p>
+        </div>
+        <div class="card-footer text-muted d-flex">
+          <a href="{% url 'article' i.pk %}" class="card-link" target="_blank">Go to article's page</a>
+          <form method="post" class="ml-auto mr-2">
+            {% csrf_token %}
+            <input hidden type="text" name='id' value="{{ i.pk }}"/>
+            <input class="btn btn-outline-danger" type="submit" value="Delete"></input>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+{% endblock %}
