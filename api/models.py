@@ -5,6 +5,8 @@ from django.contrib.postgres import fields
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 import json
+from frontend import reccom
+from django.db.models.signals import post_save
 # Create your models here.
 
 
@@ -28,11 +30,9 @@ class Article(models.Model):
     pdf = models.URLField(default=None,null=True,max_length=350)
     link = models.URLField()
 
-    reader_count = models.IntegerField()
-    reader_count_by_academic_status = JSONField()
-    reader_count_by_subject_area = JSONField()
-    reader_count_by_country = JSONField()
+    abstract = models.TextField()
 
+    count = models.IntegerField(default=0)
     # reader_count_by_academic_status = models.TextField()
     # reader_count_by_subject_area = models.TextField()
     # reader_count_by_country = models.TextField()
@@ -46,10 +46,11 @@ class Article(models.Model):
             "publisher":self.publisher,
             "pdf":self.pdf,
             "link":self.link,
-            "reader_count":self.reader_count,
-            "reader_count_by_academic_status":self.reader_count_by_academic_status,
-            "reader_count_by_subject_area":self.reader_count_by_subject_area,
-            "reader_count_by_country":self.reader_count_by_country
+            "abstract":self.abstract
+            # "reader_count":self.reader_count,
+            # "reader_count_by_academic_status":self.reader_count_by_academic_status,
+            # "reader_count_by_subject_area":self.reader_count_by_subject_area,
+            # "reader_count_by_country":self.reader_count_by_country
         }
         return json_
 
@@ -60,7 +61,11 @@ class Article(models.Model):
             return self.pdf
         except ValidationError:
             if "doi" in self.identifiers: return f"https://dx.doi.org/{self.identifiers['doi']}"
-            return None
+            return "#"
+
+        except AttributeError:
+            if "doi" in self.identifiers: return f"https://dx.doi.org/{self.identifiers['doi']}"
+            return "#"
 
     def get_issn(self):
         if "issn" in self.identifiers:
@@ -81,13 +86,22 @@ class Article(models.Model):
 
         return int(count)
 
+    def list_(self):
+        print()
+        return list(self.review_set.all().values_list('user__email',flat=True))
+
+
 
 class Review(models.Model):
     rating = models.IntegerField(choices=((-1,-1),(1,1)))
     article = models.ForeignKey(to=Article,on_delete=models.CASCADE)
     user = models.ForeignKey(to=get_user_model(),on_delete=models.CASCADE)
 
-
+def set_total(sender,instance,created,**kwargs):
+    article = instance.article
+    article.count = article.get_total()
+    article.save()
+post_save.connect(set_total,sender=Review)
 
 class Library(models.Model):
     name = models.CharField(max_length=20)

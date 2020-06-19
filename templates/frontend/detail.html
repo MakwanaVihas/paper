@@ -91,7 +91,7 @@
 
     </style>
     {% load static %}
-    <script src="{% static 'charts/canvasjs.min.js'%}"></script>
+    <!-- <script src="{% static 'charts/canvasjs.min.js'%}"></script> -->
 
 
 
@@ -112,6 +112,10 @@
         document.location = "https://twitter.com/intent/tweet?text="+body+"&url={{request.build_absolute_uri}}"
       }
       function clickedUpvote(ele) {
+        if("{{request.user.is_authenticated}}" == "False"){
+          alert("Login to review and comment")
+          return
+        }
         $(ele).parent().toggleClass("upvote")
         $(ele).parent().parent().parent().parent().find(".downvote").removeClass("downvote")
         $.ajax({
@@ -124,6 +128,10 @@
         })
       }
       function clickedDownvote(ele) {
+        if("{{request.user.is_authenticated}}" == "False"){
+          alert("Login to review and comment")
+          return
+        }
         $(ele).parent().toggleClass("downvote")
         $(ele).parent().parent().parent().parent().find(".upvote").removeClass("upvote")
         $.ajax({
@@ -175,13 +183,14 @@
         </div>
         <div class="col-12 col-lg-4">
           <div class="d-flex" class="vote">
-            <h3 class="mx-auto"><i class="fas fa-arrow-up" onclick="clickedUpvote(this)"></i></h3>
+              <h3 class="mx-auto"><i class="fas fa-arrow-up" onclick="clickedUpvote(this)"></i></h3>
+
           </div>
           <div class="d-flex" class="vote">
             <p class="mx-auto mt-1" id="vote_count">{{object.get_total}}</p>
           </div>
           <div class="d-flex" class="vote">
-            <h3 class="mx-auto"><i class="fas fa-arrow-down" onclick="clickedDownvote(this)"></i></h3>
+              <h3 class="mx-auto"><i class="fas fa-arrow-down" onclick="clickedDownvote(this)"></i></h3>
           </div>
         </div>
       </div>
@@ -233,8 +242,15 @@
           {% endfor %}
         </div>
         {% endif %}
+        <div class="ml-2 ml-md-0 my-1">
+          <span class="text-info">&nbspAbstract:</span>
+          <p>
+            {{ object.abstract }}
+          </p>
+        </div>
 
-        <div class="row border-top chart_row">
+
+        <!-- <div class="row border-top chart_row">
           <div class="col-lg-3 col-12 d-flex"><h4 class="my-auto"><span class="text-muted">Readers' Seniority</span></h4></div>
           <div class="col-lg-6 col-12 chart_div">
             <canvas id="chartContainer"></canvas>
@@ -245,14 +261,14 @@
           <div class="col-lg-6 col-12 chart_div">
             <canvas id="sub_chart"></canvas>
           </div>
-        </div>
+        </div> -->
       </div>
       <div>
         <div class="row mt-5"  style="width:100%">
-          <div class="col-12" style="font-size:1.2em">
+          <!-- <div class="col-12" style="font-size:1.2em">
             Average ratings:<br>
             {{ average }} out of 5.0 starts based on {{ count }} user reviews
-          </div>
+          </div> -->
         </div>
         <div class="row" style="width:100%">
           {% if request.user.is_authenticated %}
@@ -309,9 +325,32 @@
           {% endfor %}
         </div>
       </div>
+      <div class='row border-top mt-2'>
+        <!-- <div class="col-12 d-flex mt-2">
+
+        </div> -->
+        <div class="card col-12 text-white bg-info">
+          <div class="card-header">
+            <p style="font-size:1.3em;font-family:Comic Sans MS, cursive, sans-serif'">Similar articles:</p>
+          </div>
+
+          <div class="card-body bg-light text-dark mb-2">
+            {% for article in ids %}
+              <div class="row">
+                <div class="col-12 my-2 border-bottom d-flex">
+                  <p>{{article.title}}</p>
+                  <a href="{% url 'article' article.id %}" class="stretched-link ml-auto mr-2">&#8594;</a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+        </div>
+
+      </div>
     </div>
-    <script src="{% static 'js/chart.js'%}"></script>
-    <script type="text/javascript">
+    <!-- <script src="{% static 'js/chart.js'%}"></script> -->
+    <!-- <script type="text/javascript">
       let rev = JSON.parse("{{object.get_review_details}}".replace(/&quot;/g,"\""));
       $(".class-1").append(
       `
@@ -371,7 +410,7 @@
       `)
 
 
-    </script>
+    </script> -->
 
     <div class="modal fade" tabindex="-1" id="add_to_library">
       <div class="modal-dialog" role="document">

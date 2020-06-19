@@ -6,6 +6,7 @@ from django.db.models.signals import post_save,post_delete
 
 from .managers import Manager
 from api import models as api
+from frontend.reccom import get_similar_items
 # Create your models here.
 
 USER_ROLES = (
@@ -40,6 +41,8 @@ class User(AbstractBaseUser):
 
     class Meta:
         ordering = ['email']
+
+    
 
 
 # def update_user_post_save(sender,instance,**kwargs):

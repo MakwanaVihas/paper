@@ -5,8 +5,16 @@ import requests
 from api.models import Article,Authors
 from django.db.models import ObjectDoesNotExist
 import json
+from bs4 import BeautifulSoup
+def get_abstract(doi):
+    try:
+        res = requests.get(f'https://api.altmetric.com/v1/doi/{doi}').json()
+        return res['abstract']
+    except:
+        abstract = ''
+    return abstract
 
-def get_data_by_query(token,query):
+def get_data_by_query(token,query,limit=100):
     from django.conf import settings
     import requests
     from api.models import Article,Authors
@@ -18,15 +26,15 @@ def get_data_by_query(token,query):
 
     ids = []
     headers = {"Authorization": 'Bearer '+token}
-    linit=100
     try:
-        response = requests.get(f'https://api.mendeley.com/search/catalog?query={query}&view=all&open_access=True&limit={linit}',headers=headers).json()
+        response = requests.get(f'https://api.mendeley.com/search/catalog?query={query}&open_access=True&limit={limit}',headers=headers).json()
     except requests.exceptions.ConnectionError:
         time.sleep(5)
-        response = requests.get(f'https://api.mendeley.com/search/catalog?query={query}&view=all&open_access=True&limit={linit}',headers=headers).json()
+        response = requests.get(f'https://api.mendeley.com/search/catalog?query={query}&open_access=True&limit={limit}',headers=headers).json()
+
 
     for i,res in enumerate(response):
-
+        print(i,"ok")
         if 'identifiers' not in res:
             continue
         if 'authors' in res:
@@ -56,6 +64,8 @@ def get_data_by_query(token,query):
             article = Article.objects.get(id=res['id'])
 
         except ObjectDoesNotExist:
+            abstract = get_abstract(res['identifiers']['doi']) if 'doi' in res['identifiers'] else ""
+
             article = Article(
                 title = res['title'],type = res['type'],id=res['id'],
                 year = res['year'] if 'year' in res else 2000,
@@ -65,10 +75,12 @@ def get_data_by_query(token,query):
                 link = res['link'],
                 pdf = res['pdf'] if 'pdf' in res else None,
                 keywords = res["keywords"][:6] if "keywords" in res else None,
-                reader_count = res['reader_count'] if 'reader_count' in res else 0,
-                reader_count_by_academic_status = res['reader_count_by_academic_status'] if 'reader_count_by_academic_status' in res else '{}',
-                reader_count_by_subject_area = res['reader_count_by_subject_area'] if 'reader_count_by_subject_area' in res else '{}',
-                reader_count_by_country = res['reader_count_by_country'] if 'reader_count_by_country' in res else '{}',
+                abstract = abstract
+
+                # reader_count = res['reader_count'] if 'reader_count' in res else 0,
+                # reader_count_by_academic_status = res['reader_count_by_academic_status'] if 'reader_count_by_academic_status' in res else '{}',
+                # reader_count_by_subject_area = res['reader_count_by_subject_area'] if 'reader_count_by_subject_area' in res else '{}',
+                # reader_count_by_country = res['reader_count_by_country'] if 'reader_count_by_country' in res else '{}',
             )
             article.save()
 
@@ -93,18 +105,19 @@ def get_data(token):
     headers = {"Authorization": 'Bearer '+token}
     for key,val in settings.SUBDISCIPLINES.items():
         for sub in val:
-            linit = 10
+            limit = 100
             query = sub.replace(" ","+").lower()
             print(query)
             try:
-                response = requests.get(f'https://api.mendeley.com/search/catalog?query={query}&view=all&open_access=True&limit={linit}',headers=headers).json()
+                response = requests.get(f'https://api.mendeley.com/search/catalog?query={query}&view=all&open_access=True&limit={limit}',headers=headers).json()
             except requests.exceptions.ConnectionError:
                 print("okay_bitxh")
                 time.sleep(5)
-                response = requests.get(f'https://api.mendeley.com/search/catalog?query={query}&view=all&open_access=True&limit={linit}',headers=headers).json()
+                response = requests.get(f'https://api.mendeley.com/search/catalog?query={query}&view=all&open_access=True&limit={limit}',headers=headers).json()
 
             for i,res in enumerate(response):
                 print(i)
+
                 if 'identifiers' not in res:
                     continue
                 if 'authors' in res:
@@ -130,25 +143,28 @@ def get_data(token):
                     author.save()
                     authors.append(author)
 
+                try:
+                    article = Article.objects.get(id=res['id'])
 
-                article = Article(
-                    title = res['title'],type = res['type'],id=res['id'],
-                    year = res['year'] if 'year' in res else 2000,
-                    source = res['source'] if 'source' in res else "Not specified",
-                    publisher = res['publisher'] if 'publisher' in res else 'Anonymous',
-                    identifiers=res['identifiers'],
-                    link = res['link'],
-                    pdf = res['pdf'] if 'pdf' in res else None,
-                    keywords = res["keywords"][:6] if "keywords" in res else None,
-                    reader_count = res['reader_count'] if 'reader_count' in res else 0,
-                    reader_count_by_academic_status = res['reader_count_by_academic_status'] if 'reader_count_by_academic_status' in res else '{}',
-                    reader_count_by_subject_area = res['reader_count_by_subject_area'] if 'reader_count_by_subject_area' in res else '{}',
-                    reader_count_by_country = res['reader_count_by_country'] if 'reader_count_by_country' in res else '{}',
-                )
-                article.save()
+                except ObjectDoesNotExist:
+                    abstract = get_abstract(res['identifiers']['doi']) if 'doi' in res['identifiers'] else ""
 
-                for i in authors:
-                    article.authors.add(i)
+                    article = Article(
+                        title = res['title'],type = res['type'],id=res['id'],
+                        year = res['year'] if 'year' in res else 2000,
+                        source = res['source'] if 'source' in res else "Not specified",
+                        publisher = res['publisher'] if 'publisher' in res else 'Anonymous',
+                        identifiers=res['identifiers'],
+                        link = res['link'],
+                        pdf = res['pdf'] if 'pdf' in res else None,
+                        keywords = res["keywords"][:6] if "keywords" in res else None,
+                        abstract = abstract
+
+                    )
+                    article.save()
+
+                    for i in authors:
+                        article.authors.add(i)
 
 
 def get_article_from_authors(author_name,token):
@@ -170,6 +186,7 @@ def get_article_from_authors(author_name,token):
 
 
     headers = {"Authorization": 'Bearer '+token}
+    ids = []
     try:
         response = requests.get(f'https://api.mendeley.com/search/catalog?author={author_name}&view=all&open_access=True&limit=100',headers=headers).json()
 
@@ -214,7 +231,7 @@ def get_article_from_authors(author_name,token):
             authors.append(author)
 
         try:
-            Article.objects.get(id=res['id'])
+            article = Article.objects.get(id=res['id'])
 
         except ObjectDoesNotExist:
 
@@ -226,11 +243,12 @@ def get_article_from_authors(author_name,token):
                 identifiers=res['identifiers'],
                 link = res['link'],
                 pdf = res['pdf'] if 'pdf' in res else None,
-                keywords = res["keywords"][:6] if "keywords" in res else None,
-                reader_count = res['reader_count'] if 'reader_count' in res else 0,
-                reader_count_by_academic_status = res['reader_count_by_academic_status'] if 'reader_count_by_academic_status' in res else '{}',
-                reader_count_by_subject_area = res['reader_count_by_subject_area'] if 'reader_count_by_subject_area' in res else '{}',
-                reader_count_by_country = res['reader_count_by_country'] if 'reader_count_by_country' in res else '{}',
+                abstract = get_abstract(res['identifiers']['doi']) if 'doi' in res['identifiers'] else ""
+                # keywords = res["keywords"][:6] if "keywords" in res else None,
+                # reader_count = res['reader_count'] if 'reader_count' in res else 0,
+                # reader_count_by_academic_status = res['reader_count_by_academic_status'] if 'reader_count_by_academic_status' in res else '{}',
+                # reader_count_by_subject_area = res['reader_count_by_subject_area'] if 'reader_count_by_subject_area' in res else '{}',
+                # reader_count_by_country = res['reader_count_by_country'] if 'reader_count_by_country' in res else '{}',
             )
             try:
                 article.save()
@@ -238,3 +256,5 @@ def get_article_from_authors(author_name,token):
                     article.authors.add(i)
             except django.db.utils.DataError:
                 pass
+        ids.append(article.pk)
+    return ids

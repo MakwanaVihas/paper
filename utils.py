@@ -5,7 +5,7 @@ import requests
 from api.models import Article,Authors
 from django.db.models import ObjectDoesNotExist
 import json
-from frontend.utils import get_data
+from frontend.utils import *
 
 
 def authors_(token):
@@ -21,6 +21,8 @@ def authors_(token):
 from mendeley import Mendeley
 from mendeley.session import MendeleySession
 
-mendeley = Mendeley(8184, 'quTDlCgvGK9K3UvV')
+mendeley = Mendeley(settings.MENDELEY_ID, settings.MENDELEY_SECRET)
 auth = mendeley.start_client_credentials_flow().authenticate()
+
+# print
 get_data(auth.token['access_token'])

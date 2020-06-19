@@ -93,7 +93,7 @@ DATABASES = {
         'ENGINE':'django.db.backends.postgresql_psycopg2',
         'HOST':'',
         'PORT':'',
-        'NAME':'paper_metrics',
+        'NAME':'crm2',
         'USER':'postgres',
         'PASSWORD':'vihas007'
     }
@@ -176,3 +176,7 @@ SUBDISCIPLINES = {
     'Social Sciences':['Anthropology','Archaeology','Communications','Economics','Ethnology','Ethnomusicology','Folklore','Geography','Linguistics','Political science','Psychology','Semiotics','Sociology','Sport biomechanics'],
     'Sports and Recreations':['Adapted Physical Activity','Exercise physiology','Motor learning','Physical therapy','Sport Management','Sports Medicine','Sports & Exercise Psychology','Sport Sociology']
 }
+
+
+MENDELEY_SECRET = 'ZaDDZKH64gIeWFkj'
+MENDELEY_ID = 8198

@@ -1,9 +1,10 @@
 from django.shortcuts import render,redirect,reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from . import forms,models
-from api.models import Library
+from api.models import Library,Article
 from django.conf import settings
 from django.contrib.auth import login,logout,authenticate
+from frontend.reccom import get_similar_items
 # Create your views here.
 
 
@@ -57,3 +58,18 @@ def login_(request):
 def logout_(request):
     logout(request)
     return redirect(reverse("home"))
+
+def get_recommendation_user(request):
+    arts = []
+    if request.user.keywords:
+        for i in request.user.keywords:
+            ids = get_similar_items(query=i,start=0,end=100)
+            arts.extend(ids)
+    if request.user.tags:
+        for i in request.user.tags:
+            ids = get_similar_items(query=i,start=0,end=100)
+            arts.extend(ids)
+    arts = set(arts)
+    res = [{'title':i.title,'id':i.pk} for i in Article.objects.filter(pk__in = list(arts))]
+    return JsonResponse(res,safe=False)
+    # return arts

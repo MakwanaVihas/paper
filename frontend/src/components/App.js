@@ -13,10 +13,6 @@ class App extends Component {
     this.handlePageChange(this.state.curr_page)
   }
 
-  componentDidUpdate(){
-
-  }
-
   async handlePageChange(page_number){
 
     var data = new FormData();
@@ -54,8 +50,8 @@ class App extends Component {
     return (
       <div id="card_div">
         <Card className="text-white bg-info">
-          <CardTitle className="text-center mt-3" style={{fontSize:"1.2em",fontFamily:'"Comic Sans MS", cursive, sans-serif'}}>Most Viewed documents</CardTitle>
-          <CardBody className="bg-light text-dark">
+          <CardTitle className="text-center mt-3" style={{fontSize:"1.2em",fontFamily:'"Comic Sans MS", cursive, sans-serif'}}>Top rated documents</CardTitle>
+          <CardBody className="bg-light text-dark most_viewed">
             <div className="row">
               {this.state.elements.map(article => {
                 let url = `article/${article.pk}/`

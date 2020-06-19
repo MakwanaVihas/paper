@@ -18,11 +18,12 @@
   <body>
     {% include 'nav.html' %}
     <div class="container-lg mt-4">
+      <span>Mention your topics, authors and keywords for recommendation</span>
       <div class="nav nav-tabs" id="nav-tab" role="tablist">
         <a class="nav-link nav-item active" id="home-tab" data-toggle="tab" href="#tags" role="tab" aria-controls="home" aria-selected="true">Home</a>
         <a class="nav-link nav-item" id="profile-tab" data-toggle="tab" href="#keywords" role="tab" aria-controls="keywords" aria-selected="false">Kewords</a>
-        <a class="nav-link nav-item" id="profile-tab" data-toggle="tab" href="#authors" role="tab" aria-controls="authors" aria-selected="false">Authors</a>
-
+        <a class="nav-link nav-item" id="author-tab" data-toggle="tab" href="#authors" role="tab" aria-controls="authors" aria-selected="false">Authors</a>
+        <a class="nav-link nav-item" id="paper-tab" data-toggle="tab" href="#papers" role="tab" aria-controls="papers" aria-selected="false">Papers</a>
 
       </div>
 
@@ -92,11 +93,33 @@
             </div>
           </div>
         </div>
+        <div class="tab-pane fade show" role="tabpanel" id="papers">
+          <div class="alert alert-secondary" role="alert">
+            For multiple papers add ';' in between
+          </div>
+          <form id='get_artile'>
+            <div class="form-group">
+              <label for="">Search for specific papers:</label>
+              <input type="text" name="papers" placeholder="Search.." class="form-control">
+            </div>
+            <input type="submit" value="Import articles based on your authors, keywords and topics" class="btn btn-outline-success">
+          </form>
+        </div>
 
       </div>
-      <div class="d-flex mt-5">
+      <div class="d-flex my-5">
         <button type="button" class="btn btn-outline-secondary ml-auto mr-1 btnPrevious" name="button">Previous</button>
         <button type="button" class="btn btn-outline-info mr-auto btnNext" name="button">Next</button>
+      </div>
+      <div class="d-flex flex-column">
+        <div class="spinner-grow m-auto display" role="status" style="width: 3rem; height: 3rem;display:none">
+        </div>
+        <div class="m-auto">
+          <span class="display" style="display:none" >Fetching data. Don't hit refresh</span>
+        </div>
+        <div class="m-auto">
+          <span class="text-muted display" style="display:none" >This might take couple of minutes</span>
+        </div>
       </div>
     </div>
 
@@ -105,12 +128,46 @@
     var csrf_token = "{{csrf_token}}"
     $(document).ready(function () {
       $('.btnNext').click(function(){
-        console.log("ok");
         $('.nav-tabs > .active').next('a').trigger('click');
+        if($('.nav-tabs > .active').attr('id') == 'paper-tab'){
+          $('.btnNext').addClass('disabled')
+        }
+        else{
+          $('.btnNext').removeClass('disabled')
+        }
       });
       $('.btnPrevious').click(function(){
         $('.nav-tabs > .active').prev('a').trigger('click');
+        if($('.nav-tabs > .active').attr('id') == 'paper-tab'){
+          $('.btnNext').addClass('disabled')
+        }
+        else{
+          $('.btnNext').removeClass('disabled')
+        }
       });
+
+      $("#get_artile").submit(function(){
+        console.log($(this).find('input[name="papers"]').val().split(';'));
+        var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance
+        var theUrl = "/get_articles/get_article_from_data/";
+        var data = new FormData();
+        data.append('query', $(this).find('input[name="papers"]').val());
+        data.append('csrfmiddlewaretoken', '{{csrf_token}}');
+
+        xmlhttp.open("POST", theUrl);
+        xmlhttp.onerror = function () {
+          alert("Error while fetching data")
+          $(".display").css({'display':'none'})
+        };
+        xmlhttp.onload = function () {
+          $(".display").css({'display':'none'})
+          window.location.href = '/'
+        };
+
+        $(".display").css({'display':'block'})
+        xmlhttp.send(data)
+        return false
+      })
     })
 
     </script>

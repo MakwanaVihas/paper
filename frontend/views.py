@@ -17,12 +17,16 @@ from api.models import *
 import json
 import collections
 from .utils import get_article_from_authors,get_data,get_data_by_query
-
+from .reccom import *
+from django.db.models import Sum,Count,Max
 
 class ListArticles(ListView):
-    queryset = Article.objects.all().order_by("-reader_count")
+    queryset = Article.objects.all().order_by('get_total')
     paginate_by = 20
     template_name = 'frontend/index.html'
+    def get(self,request,*args,**kwargs):
+        print()
+        return super(ListArticles,self).get(request,*args,**kwargs)
 
 class GetAuthor(DetailView):
     model = Authors
@@ -32,7 +36,7 @@ class GetAuthor(DetailView):
         self.object = self.get_object()
         context = super().get_context_data()
 
-        paginator = Paginator(context['object'].article_set.all().order_by('-reader_count'), 25)
+        paginator = Paginator(context['object'].article_set.all().order_by('-count'), 25)
         page_number = request.GET.get('page',1)
         page_obj = paginator.get_page(page_number)
         print(page_obj)
@@ -96,10 +100,10 @@ def search(request):
         except django.core.cache.backends.base.InvalidCacheBackendError:
             pass
 
-        mendeley = Mendeley(8198, 'axDcB6prMJqODquZ')
+        mendeley = Mendeley(settings.MENDELEY_ID, settings.MENDELEY_SECRET)
         auth = mendeley.start_client_credentials_flow().authenticate()
         request.session['token'] = auth.token
-        ids = get_data_by_query(auth.token['access_token'],request.GET['search'])
+        ids = get_data_by_query(auth.token['access_token'],request.GET['search'],50)
 
         cache.set(request.GET['search'],ids,timeout=2000)
 
@@ -121,25 +125,37 @@ def add_to_library(request):
             return JsonResponse({"success":"success"})
     return JsonResponse({"error":"error"},status=404)
 
-def load_articles_author(request,pk):
-    author = Authors.objects.get(pk=pk)
-    mendeley = Mendeley(8184, 'quTDlCgvGK9K3UvV')
-    auth = mendeley.start_client_credentials_flow().authenticate()
+def load_articles_author(request):
+    if request.user.is_authenticated:
+        if request.method == 'POST':
 
-    get_article_from_authors(author.name,auth.token['access_token'])
-    return redirect(reverse('get_author',args=(pk,)))
+            author = Authors.objects.get(pk=request.POST['pk'])
+            mendeley = Mendeley(settings.MENDELEY_ID, settings.MENDELEY_SECRET)
+            auth = mendeley.start_client_credentials_flow().authenticate()
+            print(auth.token)
+
+            ids = get_article_from_authors(author.name,auth.token['access_token'])
+            articles = Article.objects.filter(pk__in = ids)
+
+            return JsonResponse({'id':list(articles.values_list("pk",flat=True)),'title':list(articles.values_list("title",flat=True))})
 
 
 @csrf_exempt
 def get_article_data(request):
     if request.method == "POST":
-        print(request.POST,request.GET)
-        article_list = Article.objects.all().order_by("-reader_count")[:1000]
-        paginator = Paginator(article_list, 25)
+        article_list = Article.objects.all().order_by('-count')
 
+        paginator = Paginator(article_list, 25)
         page_number = request.POST['page_number']
         page_obj = paginator.get_page(page_number)
         return JsonResponse({"id":list(page_obj.object_list.values_list("id",flat=True)),"has_previous":page_obj.has_previous(),"has_next":page_obj.has_next(),"total":paginator.num_pages})
+
+def get_total(id):
+    count = 0
+    for review in Article.objects.get(pk=id).review_set.all():
+        count+=review.rating
+
+    return int(count)
 
 @csrf_exempt
 def get_readers(request,id):
@@ -310,7 +326,7 @@ class DetailArticleAPI(DetailView):
     def get(self,request,pk):
         super(DetailArticleAPI,self).get(request,pk)
         article = Article.objects.get(pk=pk)
-        return JsonResponse({"reader_count":article.reader_count,"pk":pk,"title":article.title,"publisher":article.publisher,"year":article.year,"authors":list(article.authors.all().values_list("name",flat=True))})
+        return JsonResponse({"pk":pk,"title":article.title,"publisher":article.publisher,"year":article.year,"authors":list(article.authors.all().values_list("name",flat=True))})
 
 
 class DetailArticle(DetailView):
@@ -320,6 +336,10 @@ class DetailArticle(DetailView):
         super(DetailArticle,self).get(request,pk)
         self.object_list = self.get_object()
         context = self.get_context_data()
+        context['ids'] = []
+        for i in get_similar_items(f"{self.object_list.title} {self.object_list.abstract} {self.object_list.source} {self.object_list.type}",1,20):
+            art = Article.objects.get(pk=i)
+            context['ids'].append({'title':art.title,'id':art.pk})
 
         return render(request,self.template_name,context)
 
@@ -351,8 +371,9 @@ def update_review(request):
 
         return JsonResponse({"rate":article.get_total()})
 
-    # def get(self,request,pk):
-    #     super(DetailArticle,self).get(request,pk)
-    #     article = Article.objects.get(pk=pk).get_json()
-    #
-    #     return render(request,self.template_name,context=article)
+def get_recommendation(request):
+    if request.user.is_authenticated:
+        query = request.POST['query']
+        reccom = get_similar_items(query,1,100)
+        res = [{'title':i.title,'id':i.pk} for i in Article.objects.filter(pk__in = reccom)]
+        return JsonResponse(res)
