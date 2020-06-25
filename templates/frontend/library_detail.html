@@ -24,6 +24,82 @@
         </div>
       </div>
     {% endfor %}
-  </div>
+    <div class="d-flex mt-5">
+      <p style="font-size:1.2em;font-weight:100">Reccomendations for you:</p>
+    </div>
+      <div class="card text-white bg-info rec_card">
+        <div class="card-content">
+          <div class="card-header text-center" style="font-size:1.2em;font-family:Comic Sans MS, cursive, sans-serif">
+            Your recommendations
+          </div>
+        </div>
+        <div class="card-body bg-light text-dark">
+            <div class="lib_rec row" style="overflow: auto !important">
+
+            </div>
+            <!-- <div class="d-flex flex-column m-auto">
+              <div class="spinner-grow m-auto display" role="status" style="width: 3rem; height: 3rem">
+              </div>
+            </div> -->
+            <div class="d-flex">
+              <div class="pagination_footer mx-auto">
+              </div>
+            </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- <div class="d-flex">
+      <div class="pagination_footer mx-auto">
+      </div>
+    </div> -->
+
 </body>
+
+<script type="text/javascript">
+  function template(res) {
+      let dat = ''
+
+      $.each(res, function(index, item){
+          // dat += `
+          // <div class="col-12">
+          //   <div class="card my-2" style="width: 90%">
+          //     <div class="card-body">
+          //       <h5 class="card-title">Title: <span class="text-muted">${item.title}</span></h5>
+          //     </div>
+          //     <div class="card-footer text-muted d-flex">
+          //       <a href="/article/${item.id}" class="card-link" target="_blank">Go to article's page</a>
+          //     </div>
+          //   </div>
+          // </div>
+          // `;
+
+          dat += `
+          <div class="col-12 my-2 border-bottom d-flex">
+            <p>${item.title}</p>
+            <a href='/article/${item.id}' class="ml-auto mr-2 stretched-link">&#8594;</a>
+          </div>`
+      });
+      return dat;
+  }
+
+  $(function(){
+    $.ajax({
+      url:`/get_library_reccomendation/{{object.pk}}/`,
+      success:(res)=>{
+
+        $('.pagination_footer').pagination({
+          pageSize:25,
+          dataSource: res,
+          showGoInput: true,
+          showGoButton: true,
+          callback: function(data, pagination) {
+              var html = template(data);
+              $('.lib_rec').html(html);
+          }
+      })
+      }
+    })
+  })
+</script>
 {% endblock %}

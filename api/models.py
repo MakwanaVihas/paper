@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 import json
 from frontend import reccom
 from django.db.models.signals import post_save
+from django.utils import timezone
 # Create your models here.
 
 
@@ -15,6 +16,7 @@ class Authors(models.Model):
     done = models.BooleanField()
 
 class Article(models.Model):
+    add_on = models.DateTimeField(auto_now_add=True)
     title = models.TextField()
     type = models.TextField()
 
@@ -33,6 +35,7 @@ class Article(models.Model):
     abstract = models.TextField()
 
     count = models.IntegerField(default=0)
+    comm_count = models.IntegerField(default=0)
     # reader_count_by_academic_status = models.TextField()
     # reader_count_by_subject_area = models.TextField()
     # reader_count_by_country = models.TextField()
@@ -86,6 +89,9 @@ class Article(models.Model):
 
         return int(count)
 
+    def get_total_comments(self):
+        return len(self.comment_set.all())
+
     def list_(self):
         print()
         return list(self.review_set.all().values_list('user__email',flat=True))
@@ -113,3 +119,9 @@ class Comment(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     article = models.ForeignKey(Article, models.DO_NOTHING)
     user = models.ForeignKey(get_user_model(), models.DO_NOTHING)
+
+def set_total_comments(sender,instance,created,**kwargs):
+    article = instance.article
+    article.comm_count = article.get_total_comments()
+    article.save()
+post_save.connect(set_total_comments,sender=Comment)

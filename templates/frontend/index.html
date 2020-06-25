@@ -18,48 +18,115 @@
     }
   </style>
 </head>
+
 <body>
   {% include 'nav.html' %}
 
   <div class="container m-5">
-    <div class="row">
-      <div id="app" class="col-lg-6 col-md-6 col-12">
-      </div>
-      <div class="col-lg-6 col-md-6 col-12">
-        <div class="card text-white bg-info rec_card">
-          <div class="card-content">
-            <div class="card-header text-center" style="font-size:1.2em;font-family:Comic Sans MS, cursive, sans-serif">
-              Your recommendations
-            </div>
-            <div class="card-body bg-light text-dark">
-              {% if request.user.is_authenticated %}
-                <div class="reccom_body row" style="overflow: auto !important">
-
+    <ul class="nav nav-pills my-3" role="tablist">
+      <li class="nav-item red">
+        <a class="mx-2 nav-link text-white bg-info active" id="index-tab" data-toggle="tab" href="#index" role="tab" aria-selected="true">New</a>
+      </li>
+      <li class="nav-item">
+        <a class="mx-2 nav-link text-white bg-warning" id="top-tab" data-toggle="tab" href="#top" role="tab" aria-selected="false">Top</a>
+      </li>
+      <li class="nav-item">
+        <a class="mx-2 nav-link text-white bg-danger" id="hot-tab" data-toggle="tab" href="#hot" role="tab" aria-selected="false">Hot</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+      <div class="tab-pane fade show active" id="index" role="tabpanel" aria-labelledby="home-tab">
+        <div class="row">
+          <div class="col-12">
+            <div class="card text-white bg-info new_card">
+              <div class="card-content">
+                <div class="card-header text-center" style="font-size:1.2em;font-family:Comic Sans MS, cursive, sans-serif">
+                  Newly added
                 </div>
-                <div class="d-flex flex-column m-auto">
-                  <div class="spinner-grow m-auto display" role="status" style="width: 3rem; height: 3rem">
+                <div class="card-body bg-light text-dark">
+                    <div class="new_body row" style="overflow: auto !important">
+
+                    </div>
+                    <div class="d-flex flex-column m-auto">
+                      <div class="spinner-grow m-auto display" role="status" style="width: 3rem; height: 3rem">
+                      </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex bg-light">
+                  <div class="pagination_footer_new mx-auto">
+
                   </div>
                 </div>
-              {% else %}
-                <div>
-                  Login for recommendations
-                </div>
-              {% endif %}
-
+              </div>
             </div>
-            <div class="card-footer d-flex bg-light">
-              <div class="pagination_footer mx-auto">
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="top" role="tabpanel" aria-labelledby="profile-tab">
+        <div class="row">
+          <div class="col-12">
+            <div class="card text-white bg-warning top_card">
+              <div class="card-content">
+                <div class="card-header text-center" style="font-size:1.2em;font-family:Comic Sans MS, cursive, sans-serif">
+                  Top rated
+                </div>
+                <div class="card-body bg-light text-dark">
+                    <div class="top_body row" style="overflow: auto !important">
 
+                    </div>
+                    <div class="d-flex flex-column m-auto">
+                      <div class="spinner-grow m-auto display" role="status" style="width: 3rem; height: 3rem">
+                      </div>
+                    </div>
+
+
+                </div>
+                <div class="card-footer d-flex bg-light">
+                  <div class="pagination_footer_top mx-auto">
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="hot" role="tabpanel" aria-labelledby="contact-tab">
+        <div class="row">
+          <div class="col-12">
+            <div class="card text-white bg-danger hot_card">
+              <div class="card-content">
+                <div class="card-header text-center" style="font-size:1.2em;font-family:Comic Sans MS, cursive, sans-serif">
+                  Hot articles
+                </div>
+                <div class="card-body bg-light text-dark">
+                    <div class="hot_body row" style="overflow: auto !important">
+
+                    </div>
+                    <div class="d-flex flex-column m-auto">
+                      <div class="spinner-grow m-auto display" role="status" style="width: 3rem; height: 3rem">
+                      </div>
+                    </div>
+
+
+                </div>
+                <div class="card-footer d-flex bg-light">
+                  <div class="pagination_footer_hot mx-auto">
+
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    </div>
   </div>
 
 </body>
-<script src="{% static "js/main.js" %}"></script>
+<!-- <script src="{% static "js/main.js" %}"></script> -->
 <script type="text/javascript">
 function template(res) {
     let dat = ''
@@ -77,27 +144,52 @@ function template(res) {
   $(document).ready(()=>{
 
     $(".display").css({'display':'block'})
-
-
-    $.ajax({type:'GET',url:"{% url 'user_recommendations' %}",success:(res)=>{
-      console.log(res);
-      $(".display").css({'display':'none'})
-
-      // console.log($('.most_viewed').css('height'));
-      // $('.reccom_body').html(dat)
-      $('.pagination_footer').pagination({
+    $.ajax({type:'GET',url:"{% url 'get_article' %}",success:(res)=>{
+      $('.top_card').find(".display").css({'display':'none'})
+      // console.log($(this).find(".display"));
+      $('.pagination_footer_top').pagination({
         pageSize:25,
         dataSource: res,
         showGoInput: true,
         showGoButton: true,
         callback: function(data, pagination) {
             var html = template(data);
-            $('.reccom_body').html(html);
+            $('.top_body').html(html);
         }
     })
+  }})
 
+    $.ajax({type:'GET',url:"{% url 'get_article_new' %}",success:(res)=>{
+      $('.new_card').find(".display").css({'display':'none'})
+      // console.log($(this).find(".display"));
+      $('.pagination_footer_new').pagination({
+        pageSize:25,
+        dataSource: res,
+        showGoInput: true,
+        showGoButton: true,
+        callback: function(data, pagination) {
+            var html = template(data);
+            $('.new_body').html(html);
+        }
+    })
+  }})
 
-
+    $.ajax({type:'GET',url:"{% url 'get_article_top' %}",success:(res)=>{
+      if(res.error == 'error'){
+        return
+      }
+      $('.hot_card').find(".display").css({'display':'none'})
+      $('.pagination_footer_hot').pagination({
+        pageSize:25,
+        dataSource: res,
+        showGoInput: true,
+        showGoButton: true,
+        callback: function(data, pagination) {
+            var html = template(data);
+            $('.hot_body').html(html);
+            console.log("oj");
+        }
+      })
     }})
   })
 </script>

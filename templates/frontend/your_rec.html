@@ -1,0 +1,89 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+  <script src="https://pagination.js.org/dist/2.1.5/pagination.js"></script>
+  <link rel="stylesheet" href="https://pagination.js.org/dist/2.1.5/pagination.css">
+  <style media="screen">
+    #card_div{
+      width:100%;
+    }
+  </style>
+</head>
+<body>
+  {% include 'nav.html' %}
+
+  <div class="container m-5">
+    <div class="d-flex mt-5">
+      <p style="font-size:1.2em;font-weight:100">Reccomendations for you:</p>
+    </div>
+      <div class="card text-white bg-info rec_card">
+        <div class="card-content">
+          <div class="card-header text-center" style="font-size:1.2em;font-family:Comic Sans MS, cursive, sans-serif">
+            Your recommendations
+          </div>
+          <div class="card-body bg-light text-dark">
+            {% if request.user.is_authenticated %}
+              <div class="reccom_body row" style="overflow: auto !important">
+
+              </div>
+              <div class="d-flex flex-column m-auto">
+                <div class="spinner-grow m-auto display" role="status" style="width: 3rem; height: 3rem">
+                </div>
+              </div>
+            {% else %}
+              <div>
+                Login for recommendations
+              </div>
+            {% endif %}
+
+          </div>
+          <div class="card-footer d-flex bg-light">
+            <div class="pagination_footer mx-auto">
+
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+  <script type="text/javascript">
+    function template(res) {
+        let dat = ''
+
+        $.each(res, function(index, item){
+            dat += `
+                <div class="col-12 my-2 border-bottom d-flex">
+                  <p>${item.title}</p>
+                  <a href='/article/${item.id}' class="ml-auto mr-2 stretched-link">&#8594;</a>
+                </div>
+            `;
+        });
+        return dat;
+    }
+    $(function(){
+      $.ajax({type:'GET',url:"{% url 'user_recommendations' %}",success:(res)=>{
+        if(res.error == 'error'){
+          return
+        }
+        $('.rec_card').find(".display").css({'display':'none'})
+        $('.pagination_footer').pagination({
+          pageSize:25,
+          dataSource: res,
+          showGoInput: true,
+          showGoButton: true,
+          callback: function(data, pagination) {
+              var html = template(data);
+              $('.reccom_body').html(html);
+          }
+        })
+      }})
+    })
+  </script>
+  </body>
+</html>

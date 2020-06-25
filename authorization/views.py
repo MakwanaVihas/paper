@@ -60,16 +60,20 @@ def logout_(request):
     return redirect(reverse("home"))
 
 def get_recommendation_user(request):
-    arts = []
-    if request.user.keywords:
-        for i in request.user.keywords:
-            ids = get_similar_items(query=i,start=0,end=100)
-            arts.extend(ids)
-    if request.user.tags:
-        for i in request.user.tags:
-            ids = get_similar_items(query=i,start=0,end=100)
-            arts.extend(ids)
-    arts = set(arts)
-    res = [{'title':i.title,'id':i.pk} for i in Article.objects.filter(pk__in = list(arts))]
-    return JsonResponse(res,safe=False)
+    if request.user.is_authenticated:
+        arts = []
+        if request.user.keywords:
+            for i in request.user.keywords:
+                ids = get_similar_items(query=i,start=0,end=100,get_scores=True)
+                arts.extend(ids)
+        if request.user.tags:
+            for i in request.user.tags:
+                ids = get_similar_items(query=i,start=0,end=100,get_scores=True)
+                arts.extend(ids)
+        # res = [{'title':i.title,'id':i.pk,'score'} for i in Article.objects.filter(pk__in = list(arts))]
+        res = [{'title':Article.objects.get(pk=i[0]).title,'id':i[0],'score':i[-1]} for i in arts]
+        res = sorted(res,key=lambda c:c['score'],reverse=True)
+
+        return JsonResponse(res,safe=False)
+    return JsonResponse({'error':"error"})
     # return arts

@@ -7,6 +7,7 @@ urlpatterns = [
     path('get_article_data/',views.get_article_data,name='get_article_data'),
     path('library/',views.LibaraySet.as_view(),name='library'),
     path('library/<pk>/',views.LibraryDetail.as_view(),name='library_detail'),
+    path('reccomendation/',views.recomed,name='reccomend'),
 
     path('topics/',views.topics,name='topics'),
     path('add_remove_topic/',views.add_remove_topic,name="add_remove_topic"),
@@ -23,6 +24,10 @@ urlpatterns = [
     path('get_readers/<str:id>/',views.get_readers,name="get_readers"),
     path('update_review/',views.update_review,name='update_review'),
     path('get_recommendation/',views.get_recommendation,name='get_recommendation'),
+    path('get_article/',views.get_article,name='get_article'),
+    path('get_article_top/',views.get_article_top,name='get_article_top'),
+    path('get_article_new/',views.get_article_new,name='get_article_new'),
 
-    path('get_articles/get_article_from_data/',get_articles.get_article_from_data,name='get_article_from_data')
+    path('get_articles/get_article_from_data/',get_articles.get_article_from_data,name='get_article_from_data'),
+    path('get_library_reccomendation/<pk>/',views.get_library_reccomendation,name='get_library_reccomendation')
 ]

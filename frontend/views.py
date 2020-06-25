@@ -12,21 +12,17 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render,redirect,reverse
 from mendeley import Mendeley
 from mendeley.session import MendeleySession
-from django.views.generic import ListView,DetailView
+from django.views.generic import ListView,DetailView,TemplateView
 from api.models import *
 import json
 import collections
 from .utils import get_article_from_authors,get_data,get_data_by_query
 from .reccom import *
 from django.db.models import Sum,Count,Max
+import random
 
-class ListArticles(ListView):
-    queryset = Article.objects.all().order_by('get_total')
-    paginate_by = 20
+class ListArticles(TemplateView):
     template_name = 'frontend/index.html'
-    def get(self,request,*args,**kwargs):
-        print()
-        return super(ListArticles,self).get(request,*args,**kwargs)
 
 class GetAuthor(DetailView):
     model = Authors
@@ -150,12 +146,6 @@ def get_article_data(request):
         page_obj = paginator.get_page(page_number)
         return JsonResponse({"id":list(page_obj.object_list.values_list("id",flat=True)),"has_previous":page_obj.has_previous(),"has_next":page_obj.has_next(),"total":paginator.num_pages})
 
-def get_total(id):
-    count = 0
-    for review in Article.objects.get(pk=id).review_set.all():
-        count+=review.rating
-
-    return int(count)
 
 @csrf_exempt
 def get_readers(request,id):
@@ -353,6 +343,11 @@ class DetailArticle(DetailView):
 
         return HttpResponseRedirect(request.path_info)
 
+def recomed(request):
+    if request.user.is_authenticated:
+        return render(request,'frontend/your_rec.html')
+    return redirect(reverse('login'))
+
 def update_review(request):
     if request.user.is_authenticated:
         rating = request.POST['rating']
@@ -377,3 +372,41 @@ def get_recommendation(request):
         reccom = get_similar_items(query,1,100)
         res = [{'title':i.title,'id':i.pk} for i in Article.objects.filter(pk__in = reccom)]
         return JsonResponse(res)
+    return JsonResponse({'error':"error"})
+
+def get_article(request):
+    # if request.user.is_authenticated:
+    article_list = Article.objects.all().order_by('-count')[:1000]
+    res = [{'title':i.title,'id':i.pk} for i in article_list]
+    return JsonResponse(res,safe=False)
+
+def get_article_top(request):
+    # if request.user.is_authenticated:
+    article_list = Article.objects.all().order_by('-comm_count')[:1000]
+    res = [{'title':i.title,'id':i.pk} for i in article_list]
+    return JsonResponse(res,safe=False)
+
+def get_article_new(request):
+    # if request.user.is_authenticated:
+    article_list = Article.objects.all().order_by('-add_on')[:1000]
+    res = [{'title':i.title,'id':i.pk} for i in article_list]
+    return JsonResponse(res,safe=False)
+
+def get_library_reccomendation(request,pk):
+    if request.user.is_authenticated:
+        arts = []
+        lib = Library.objects.get(pk=pk)
+        for i in lib.articles.all():
+            reccom = get_similar_items(f"{i.title} {i.abstract} {i.source} {i.type}",get_scores=True)
+            arts_ = [{'title':i.title,'id':i.pk,'score':reccom[:,1][j]} for j,i in enumerate(Article.objects.filter(pk__in = reccom[:,0]))]
+            arts.extend(arts_)
+        arts = sorted(arts, key=lambda item: item['score'],reverse=True)
+        return JsonResponse(arts,safe=False)
+
+
+# def get_total(id):
+#     count = 0
+#     for review in Article.objects.get(pk=id).review_set.all():
+#         count+=review.rating
+#
+#     return int(count)
